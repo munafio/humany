@@ -1,0 +1,52 @@
+name: Feature request
+description: New formatter option, locale, or API improvement
+title: "[feat]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the problem first, then the solution you want.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is hard or missing today?
+      placeholder: "I need to format … for users in …"
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: API shape, examples, or behavior
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - number
+        - bytes
+        - duration
+        - relative
+        - percent
+        - locale / i18n
+        - no_std / performance
+        - docs
+        - other
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - label: I am willing to open a PR for this
+        - label: This can wait until after 0.1
+        - label: Breaking API change is acceptable if documented

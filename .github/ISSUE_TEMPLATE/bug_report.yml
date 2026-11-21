@@ -1,0 +1,68 @@
+name: Bug report
+description: Something is wrong — wrong output, panic, or build failure
+title: "[bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Include a minimal example if you can — it helps a lot.
+
+  - type: input
+    id: version
+    attributes:
+      label: Humany version
+      placeholder: "0.1.0 or git commit"
+    validations:
+      required: true
+
+  - type: input
+    id: rust
+    attributes:
+      label: Rust toolchain
+      placeholder: "rustc 1.83.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: features
+    attributes:
+      label: Cargo features
+      options:
+        - default (std)
+        - no-default-features
+        - std + chrono
+        - std + time
+        - other
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected output
+      description: What you thought would print
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual output
+    validations:
+      required: true
+
+  - type: textarea
+    id: code
+    attributes:
+      label: Minimal code sample
+      description: Smallest `main` or test that shows the bug
+      render: rust
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Locale, rounding options, platform, etc.

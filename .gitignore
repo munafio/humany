@@ -1,0 +1,21 @@
+/target/
+**/*.rs.bk
+*.pdb
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Debug / local
+*.log
+.env
+.env.*
+
+# Cargo config overrides (local only)
+/.cargo/config.local.toml

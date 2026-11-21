@@ -1,0 +1,33 @@
+[package]
+name = "humany"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.70"
+description = "Human-readable formatting for Rust"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/munafio/humany"
+homepage = "https://github.com/munafio/humany"
+keywords = ["format", "human", "duration", "bytes", "locale"]
+categories = ["localization", "value-formatting", "no-std"]
+
+[features]
+default = ["std"]
+std = []
+chrono = ["std", "dep:chrono"]
+time = ["std", "dep:time"]
+
+[dependencies]
+libm = "0.2"
+chrono = { version = "0.4", optional = true, default-features = false, features = ["clock", "std"] }
+time = { version = "0.3", optional = true, default-features = false, features = ["std"] }
+
+[dev-dependencies]
+
+[[example]]
+name = "basic"
+required-features = ["std"]
+
+[[example]]
+name = "customization"
+required-features = ["std"]
