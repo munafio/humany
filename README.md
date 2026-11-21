@@ -1,4 +1,4 @@
-
+<div align="center">
 
 # Humany
 
@@ -9,13 +9,18 @@
   
 
 
-![Rust](https://img.shields.io/badge/Rust-1.70%2B-orange?style=flat-square&logo=rust)
-![no_std](https://img.shields.io/badge/no__std-ready-546e7a?style=flat-square)
-![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat-square)
-![MSRV](https://img.shields.io/badge/MSRV-1.70-informational?style=flat-square)
-![GitHub](https://img.shields.io/badge/GitHub-munafio%2Fhumany-24292f?style=flat-square&logo=github)
+
+[![Rust](https://img.shields.io/badge/Rust-1.70%2B-orange?style=flat-square&logo=rust)](https://www.rust-lang.org)
+[![no_std](https://img.shields.io/badge/no__std-ready-546e7a?style=flat-square)](#no_std)
+[![MSRV](https://img.shields.io/badge/MSRV-1.70-informational?style=flat-square)](Cargo.toml)
+[![crates.io](https://img.shields.io/crates/v/humany?style=flat-square&logo=rust)](https://crates.io/crates/humany)
+[![Downloads](https://img.shields.io/crates/d/humany?style=flat-square)](https://crates.io/crates/humany)
+
+<br/>
 
 `formatting` · `duration` · `bytes` · `i18n` · `display` · `embedded`
+
+<br/>
 
   
 
@@ -26,7 +31,7 @@
 [Features](#cargo-features) ·
 [Contributing](CONTRIBUTING.md)
 
-
+</div>
 
 ---
 
@@ -318,6 +323,8 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR.
 
 ---
 
-
+<div align="center">
 
 **[Report a bug](.github/ISSUE_TEMPLATE/bug_report.yml)** · **[Request a feature](.github/ISSUE_TEMPLATE/feature_request.yml)** · **[Security](SECURITY.md)**
+
+</div>

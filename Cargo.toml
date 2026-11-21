@@ -11,7 +11,7 @@ homepage = "https://github.com/munafio/humany"
 authors = ["Munafio <info@munafio.com>"]
 keywords = ["format", "human", "duration", "bytes", "locale"]
 categories = ["localization", "value-formatting", "no-std"]
-documentation = "https://github.com/munafio/humany"
+documentation = "https://docs.rs/humany"
 
 [features]
 default = ["std"]
