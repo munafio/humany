@@ -290,27 +290,6 @@ cargo test --no-default-features
 
 ---
 
-## Project layout
-
-```text
-humany/
-├── src/
-│   ├── lib.rs
-│   ├── context.rs      # Humany presets
-│   ├── locale/         # i18n dispatch
-│   │   ├── langs/      # en.rs, ar.rs, fr.rs, …
-│   │   └── helpers.rs
-│   ├── number.rs
-│   ├── bytes.rs
-│   ├── duration.rs
-│   ├── relative.rs
-│   └── percent.rs
-├── examples/
-└── tests/
-```
-
----
-
 ## Development
 
 ```bash
