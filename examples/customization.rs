@@ -1,8 +1,17 @@
+//! Chained options — see `basic.rs` for default-only usage.
+
 use humany::{bytes, duration, number, Humany, Locale, RoundingMode};
 
 fn main() {
+    // Defaults
+    println!("default number: {}", number(1_250_000));
+    println!("default bytes:  {}", bytes(1_500_000));
+
+    println!();
+
+    // Customized
     println!(
-        "{}",
+        "number: {}",
         number(1_250_000).decimals(3).trim_trailing_zeros(false)
     );
     println!("{}", bytes(1_500_000).decimal().decimals(2));
