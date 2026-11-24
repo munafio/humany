@@ -8,6 +8,7 @@ use crate::locale::time_unit::TimeUnit;
 
 pub(crate) const TABLES: LocaleTables = LocaleTables {
     percent_symbol: "%",
+    past_prefix: "",
     ago: "前",
     in_prefix: "",
     in_suffix: "后",

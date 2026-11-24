@@ -4,13 +4,13 @@ use core::fmt;
 
 use crate::context::Humany;
 use crate::locale::{write_relative, Locale, TimeUnit};
-use crate::options::{write_u64, FormatOptions};
+use crate::options::write_u64;
 
 /// Human-readable relative time from a signed second delta (positive = past).
 #[derive(Clone, Copy, Debug)]
 pub struct Relative {
-    delta_secs: i64,
-    options: FormatOptions,
+    seconds: u64,
+    past: bool,
     locale: Locale,
     compact: bool,
 }
@@ -22,19 +22,22 @@ pub fn relative_secs(delta_secs: i64) -> Relative {
 
 /// Relative time between two UNIX timestamps in seconds (`later - earlier`).
 pub fn relative_between(earlier_secs: u64, later_secs: u64) -> Relative {
-    let delta = if later_secs >= earlier_secs {
-        (later_secs - earlier_secs) as i64
-    } else {
-        -((earlier_secs - later_secs) as i64)
-    };
-    relative_secs(delta)
+    Relative::from_parts(
+        later_secs.abs_diff(earlier_secs),
+        later_secs >= earlier_secs,
+        Locale::En,
+    )
 }
 
 impl Relative {
-    pub(crate) fn new(delta_secs: i64, options: FormatOptions, locale: Locale) -> Self {
+    pub(crate) fn new(delta_secs: i64, locale: Locale) -> Self {
+        Self::from_parts(delta_secs.unsigned_abs(), delta_secs >= 0, locale)
+    }
+
+    pub(crate) const fn from_parts(seconds: u64, past: bool, locale: Locale) -> Self {
         Self {
-            delta_secs,
-            options,
+            seconds,
+            past,
             locale,
             compact: false,
         }
@@ -61,25 +64,12 @@ impl Relative {
 
 impl fmt::Display for Relative {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let _ = self.options;
-        let abs = self.delta_secs.unsigned_abs();
-        if abs == 0 {
-            let tables = self.locale.tables();
-            return if self.compact {
-                f.write_str("0s")?;
-                f.write_str(tables.ago)
-            } else {
-                write_relative(f, self.locale, true, TimeUnit::Second, 0)
-            };
-        }
-
-        let past = self.delta_secs > 0;
-        let (unit, count) = pick_unit(abs);
+        let (unit, count) = pick_unit(self.seconds);
 
         if self.compact {
-            write_compact_relative(f, past, unit, count, self.locale)
+            write_compact_relative(f, self.past, unit, count, self.locale)
         } else {
-            write_relative(f, self.locale, past, unit, count)
+            write_relative(f, self.locale, self.past, unit, count)
         }
     }
 }
@@ -108,9 +98,11 @@ fn write_compact_relative(
     locale: Locale,
 ) -> fmt::Result {
     let tables = locale.tables();
-    if !past {
-        f.write_str(tables.in_prefix)?;
-    }
+    f.write_str(if past {
+        tables.past_prefix
+    } else {
+        tables.in_prefix
+    })?;
     write_u64(f, count)?;
     let suffix = match unit {
         TimeUnit::Second => tables.duration_second_short,

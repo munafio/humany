@@ -4,9 +4,7 @@ use core::fmt;
 
 use crate::context::Humany;
 use crate::locale::Locale;
-use crate::options::{
-    write_fixed_f64, write_i64, write_scaled_decimal, FormatOptions, RoundingMode,
-};
+use crate::options::{write_scaled_decimal, write_scaled_f64, FormatOptions, RoundingMode};
 
 const DEFAULT_SUFFIXES: &[&str] = &["", "K", "M", "B", "T"];
 
@@ -20,9 +18,10 @@ pub struct Number {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub(crate) enum NumberBits {
-    I64(i64),
-    F64(f64),
+enum NumberBits {
+    Signed(i64),
+    Unsigned(u64),
+    Float(f64),
 }
 
 /// Format a number using [`Humany::DEFAULT`] (English).
@@ -37,44 +36,34 @@ pub trait IntoNumber {
 }
 
 macro_rules! impl_into_number_int {
-    ($($ty:ty),+ $(,)?) => {
+    ($variant:ident, $storage:ty; $($ty:ty),+ $(,)?) => {
         $(
             impl IntoNumber for $ty {
                 fn into_humany_number(self, defaults: FormatOptions, locale: Locale) -> Number {
-                    Number::from_bits(NumberBits::I64(self as i64), defaults, locale)
+                    Number::from_bits(NumberBits::$variant(self as $storage), defaults, locale)
                 }
             }
         )+
     };
 }
 
-impl_into_number_int!(i8, i16, i32, i64, u8, u16, u32);
-
-impl IntoNumber for u64 {
-    fn into_humany_number(self, defaults: FormatOptions, locale: Locale) -> Number {
-        let bits = if self <= i64::MAX as u64 {
-            NumberBits::I64(self as i64)
-        } else {
-            NumberBits::F64(self as f64)
-        };
-        Number::from_bits(bits, defaults, locale)
-    }
-}
+impl_into_number_int!(Signed, i64; i8, i16, i32, i64, isize);
+impl_into_number_int!(Unsigned, u64; u8, u16, u32, u64, usize);
 
 impl IntoNumber for f32 {
     fn into_humany_number(self, defaults: FormatOptions, locale: Locale) -> Number {
-        Number::from_bits(NumberBits::F64(self as f64), defaults, locale)
+        Number::from_bits(NumberBits::Float(self as f64), defaults, locale)
     }
 }
 
 impl IntoNumber for f64 {
     fn into_humany_number(self, defaults: FormatOptions, locale: Locale) -> Number {
-        Number::from_bits(NumberBits::F64(self), defaults, locale)
+        Number::from_bits(NumberBits::Float(self), defaults, locale)
     }
 }
 
 impl Number {
-    pub(crate) fn from_bits(bits: NumberBits, options: FormatOptions, locale: Locale) -> Self {
+    fn from_bits(bits: NumberBits, options: FormatOptions, locale: Locale) -> Self {
         Self {
             bits,
             options,
@@ -83,7 +72,7 @@ impl Number {
         }
     }
 
-    /// Set the number of fractional digits when scaling (default `2`).
+    /// Set the number of fractional digits when scaling (default `2`, maximum `18`).
     pub const fn decimals(mut self, decimals: u8) -> Self {
         self.options = self.options.decimals(decimals);
         self
@@ -107,7 +96,7 @@ impl Number {
         self
     }
 
-    /// Custom unit suffixes (`""`, `K`, `M`, …); must include at least five entries.
+    /// Custom unit suffixes (`""`, `K`, `M`, …). A missing tier is printed unscaled.
     pub const fn suffixes(mut self, suffixes: &'static [&'static str]) -> Self {
         self.suffixes = suffixes;
         self
@@ -116,90 +105,65 @@ impl Number {
 
 impl fmt::Display for Number {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let _ = self.locale;
+        let separator = self.locale.decimal_separator();
         match self.bits {
-            NumberBits::I64(v) => fmt_i64(f, v, self.options, self.suffixes),
-            NumberBits::F64(v) => fmt_f64(f, v, self.options, self.suffixes),
+            NumberBits::Signed(v) => self.fmt_integer(f, v.unsigned_abs(), v < 0, separator),
+            NumberBits::Unsigned(v) => self.fmt_integer(f, v, false, separator),
+            NumberBits::Float(v) => self.fmt_float(f, v, separator),
         }
     }
 }
 
-fn fmt_i64(
-    f: &mut fmt::Formatter<'_>,
-    value: i64,
-    options: FormatOptions,
-    suffixes: &[&str],
-) -> fmt::Result {
-    let negative = value < 0;
-    let abs = if negative {
-        if value == i64::MIN {
-            u128::from(i64::MAX as u64) + 1
-        } else {
-            (-value) as u128
+impl Number {
+    fn fmt_integer(
+        &self,
+        f: &mut fmt::Formatter<'_>,
+        magnitude: u64,
+        negative: bool,
+        separator: char,
+    ) -> fmt::Result {
+        let tier = tier_for(magnitude);
+        if tier == 0 || tier >= self.suffixes.len() {
+            return if negative {
+                write!(f, "-{magnitude}")
+            } else {
+                write!(f, "{magnitude}")
+            };
         }
-    } else {
-        value as u128
-    };
 
-    if abs < 1000 {
-        return write_i64(f, value);
-    }
-
-    let tier = tier_for(abs);
-    if tier >= suffixes.len() {
-        return write_i64(f, value);
-    }
-
-    if negative {
-        f.write_str("-")?;
-    }
-
-    let divisor = 1000u128.saturating_pow(tier as u32);
-    write_scaled_decimal(f, abs, divisor, options)?;
-    f.write_str(suffixes[tier])
-}
-
-fn fmt_f64(
-    f: &mut fmt::Formatter<'_>,
-    value: f64,
-    options: FormatOptions,
-    suffixes: &[&str],
-) -> fmt::Result {
-    let negative = value < 0.0;
-    let abs = value.abs();
-
-    if abs < 1000.0 {
-        return write_fixed_f64(
+        write_scaled_decimal(
             f,
-            value,
-            FormatOptions {
-                decimals: 0,
-                trim_trailing_zeros: true,
-                rounding: options.rounding,
-            },
-        );
+            magnitude,
+            negative,
+            DIVISORS[tier],
+            self.options,
+            separator,
+        )?;
+        f.write_str(self.suffixes[tier])
     }
 
-    let tier = tier_for(abs as u128);
-    if tier >= suffixes.len() {
-        return write_fixed_f64(f, value, options);
-    }
+    fn fmt_float(&self, f: &mut fmt::Formatter<'_>, value: f64, separator: char) -> fmt::Result {
+        if !value.is_finite() {
+            return write!(f, "{value}");
+        }
 
-    if negative {
-        f.write_str("-")?;
-    }
+        let tier = tier_for(value.abs() as u64);
+        if tier == 0 {
+            return write_scaled_f64(f, value, 0, self.options.decimals(0), separator);
+        }
+        if tier >= self.suffixes.len() {
+            return write_scaled_f64(f, value, 0, self.options, separator);
+        }
 
-    let scaled = abs / libm::pow(1000.0, tier as f64);
-    write_fixed_f64(f, scaled, options)?;
-    f.write_str(suffixes[tier])
+        write_scaled_f64(f, value, -3 * tier as i32, self.options, separator)?;
+        f.write_str(self.suffixes[tier])
+    }
 }
 
-fn tier_for(abs: u128) -> usize {
-    let mut tier = 0usize;
-    let mut threshold = 1000u128;
-    while abs >= threshold && tier + 1 < DEFAULT_SUFFIXES.len() {
-        threshold = threshold.saturating_mul(1000);
-        tier += 1;
-    }
-    tier
+const DIVISORS: [u64; 5] = [1, 1_000, 1_000_000, 1_000_000_000, 1_000_000_000_000];
+
+fn tier_for(magnitude: u64) -> usize {
+    DIVISORS
+        .partition_point(|&divisor| divisor <= magnitude)
+        .saturating_sub(1)
 }

@@ -28,7 +28,7 @@ We aim to acknowledge reports within **72 hours** and to provide a fix or mitiga
 Humany formats values for display. It does not execute untrusted code, parse network input, or handle secrets. Typical risks are limited to:
 
 - Panics or incorrect output on extreme inputs
-- Dependency vulnerabilities (`libm`, optional `chrono` / `time`)
+- Dependency vulnerabilities (optional `chrono` / `time`)
 
 Reports outside this scope may still be accepted if they affect downstream users.
 

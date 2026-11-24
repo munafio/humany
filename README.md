@@ -42,7 +42,7 @@ Computers like `1250000` and `1073741824`. Humans like `**1.25M**` and `**1 GiB*
 **Humany** is a small Rust crate that:
 
 - Formats values **only when you print them** (`Display` — no extra `String` unless you ask).
-- Works in `**no_std**` projects (with a tiny `libm` helper for floats).
+- Works in `no_std` projects without requiring `alloc` or any dependencies.
 - Lets you set language **once** with [`Humany`](src/context.rs) presets, or **per value** with `.locale(...)`.
 
 If you have ever copy-pasted “format bytes” helpers into three projects — this is the one dependency instead.
@@ -142,7 +142,7 @@ println!("{}", bytes(1_500_000).decimal()); // 1.5 MB
 
 ### Duration — `duration()`
 
-Accepts **seconds** (`u64`) or `std::time::Duration` (includes sub-second parts).
+Accepts **seconds** (`u64`) or `std::time::Duration` (includes sub-second parts in compact and long output).
 
 | Seconds | Compact (default) |
 |--------:|-------------------|
@@ -202,7 +202,7 @@ println!("{}", relative(t).reference(SystemTime::now()));
 | 0.85623 | `85.62%` |
 | 0.125 | `12.5%` |
 
-Defaults: multiply by 100, **2** decimals, trim trailing zeros.
+Defaults: multiply by 100, **2** decimals, trim trailing zeros. Number, byte, and percentage formatters accept up to **18** decimal places and clamp larger requests. Floating-point formatters round the shortest decimal representation of the input, so a ratio like `0.29` formats as `29%` with zero decimal places and `Floor` rounding.
 
 ```rust
 use humany::percent;
@@ -212,7 +212,7 @@ println!("{}", percent(0.125));    // 12.5%
 println!("{}", percent(0.85623));  // 85.62%
 
 // Customize — more digits or symbols
-println!("{}", percent(0.85623).decimals(4)); // 85.6230%
+println!("{}", percent(0.85623).decimals(4)); // 85.623%
 ```
 
 ---
@@ -231,14 +231,14 @@ Built-in languages:
 | Chinese (Simplified) | `Locale::Zh` | `Humany::ZH` | `2分钟前` |
 | Japanese | `Locale::Ja` | `Humany::JA` | `2分前` |
 | Portuguese | `Locale::Pt` | `Humany::PT` | `há 2 minutos` |
-| Russian | `Locale::Ru` | `Humany::RU` | `2 минут назад` |
+| Russian | `Locale::Ru` | `Humany::RU` | `2 минуты назад` |
 
 **Two ways to set language:**
 
 1. **Instance** — create once, reuse: `let h = Humany::FR;`
 2. **Inline** — one-off: `number(n).locale(Locale::Ja)`
 
-Inline `.locale()` **overrides** the `Humany` instance if both are used.
+Inline `.locale()` **overrides** the `Humany` instance if both are used. Numbers, bytes, and percentages use the locale’s decimal separator and keep ASCII digits. Duration and relative-time formatters use localized unit labels or phrases.
 
 Translation files live under [`src/locale/langs/`](src/locale/langs/). See [CONTRIBUTING.md](CONTRIBUTING.md) to add a language.
 
@@ -271,6 +271,8 @@ Free functions (`number()`, `bytes()`, …) use `**Humany::DEFAULT**` (English).
 | `chrono` | no | `relative_chrono(DateTime<Utc>)` |
 | `time` | no | `relative_time(OffsetDateTime)` |
 
+The core formatters support Rust 1.70. The locked `time` integration uses `time` 0.3.55, which requires Rust 1.88.
+
 ```toml
 # Embedded / no_std
 humany = { version = "0.1", default-features = false }
@@ -286,7 +288,7 @@ humany = { version = "0.1", features = ["chrono"] }
 The crate uses `#![no_std]`. With `default-features = false`:
 
 - Core formatters work (`number`, `bytes`, `duration`, `percent`, `relative_secs`).
-- `**libm**` is used for floating-point formatting (no `std` math).
+- The core formatters have zero dependencies.
 - Enable `std` when you need wall-clock `SystemTime`.
 
 ```bash

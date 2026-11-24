@@ -18,7 +18,7 @@ cargo clippy --all-targets -- -D warnings
 cargo fmt --check
 ```
 
-**MSRV:** Rust **1.70** (see `rust-version` in `Cargo.toml`).
+**MSRV:** Rust **1.70** for the core crate. The locked `time` integration requires Rust **1.88**.
 
 ## What we welcome
 

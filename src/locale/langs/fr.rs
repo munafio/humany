@@ -7,7 +7,8 @@ use crate::locale::tables::LocaleTables;
 use crate::locale::time_unit::TimeUnit;
 
 pub(crate) const TABLES: LocaleTables = LocaleTables {
-    percent_symbol: "%",
+    percent_symbol: "\u{00a0}%",
+    past_prefix: "il y a ",
     ago: "",
     in_prefix: "dans ",
     in_suffix: "",
@@ -39,5 +40,5 @@ pub(crate) fn write_relative(
     unit: TimeUnit,
     count: u64,
 ) -> fmt::Result {
-    helpers::write_relative_past_prefix(f, &TABLES, "il y a ", past, unit, count)
+    helpers::write_relative_in_out(f, &TABLES, past, unit, count)
 }

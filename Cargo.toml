@@ -20,11 +20,8 @@ chrono = ["std", "dep:chrono"]
 time = ["std", "dep:time"]
 
 [dependencies]
-libm = "0.2"
-chrono = { version = "0.4", optional = true, default-features = false, features = ["clock", "std"] }
+chrono = { version = "0.4", optional = true, default-features = false, features = ["std"] }
 time = { version = "0.3", optional = true, default-features = false, features = ["std"] }
-
-[dev-dependencies]
 
 [[example]]
 name = "basic"

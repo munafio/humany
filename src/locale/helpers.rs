@@ -6,7 +6,7 @@ use super::tables::LocaleTables;
 use super::time_unit::TimeUnit;
 use crate::options::write_u64;
 
-/// English-style: `2 minutes ago` / `in 2 days`.
+/// Relative time using a prefix and suffix around a counted unit.
 pub(crate) fn write_relative_in_out(
     f: &mut fmt::Formatter<'_>,
     tables: &LocaleTables,
@@ -14,46 +14,16 @@ pub(crate) fn write_relative_in_out(
     unit: TimeUnit,
     count: u64,
 ) -> fmt::Result {
-    if past {
-        if count == 1 {
-            f.write_str(tables.unit_label(unit, 1))?;
-        } else {
-            write_u64(f, count)?;
-            f.write_str(tables.unit_label(unit, count))?;
-        }
-        f.write_str(tables.ago)
+    f.write_str(if past {
+        tables.past_prefix
     } else {
-        f.write_str(tables.in_prefix)?;
+        tables.in_prefix
+    })?;
+    if count != 1 {
         write_u64(f, count)?;
-        f.write_str(unit.unit_other_label(tables))?;
-        f.write_str(tables.in_suffix)
     }
-}
-
-/// `{prefix}{count}{unit_phrase}` for past; future uses table `in_prefix` / `in_suffix`.
-pub(crate) fn write_relative_past_prefix(
-    f: &mut fmt::Formatter<'_>,
-    tables: &LocaleTables,
-    past_prefix: &'static str,
-    past: bool,
-    unit: TimeUnit,
-    count: u64,
-) -> fmt::Result {
-    if past {
-        f.write_str(past_prefix)?;
-        if count == 1 {
-            f.write_str(tables.unit_label(unit, 1))?;
-        } else {
-            write_u64(f, count)?;
-            f.write_str(tables.unit_label(unit, count))?;
-        }
-        Ok(())
-    } else {
-        f.write_str(tables.in_prefix)?;
-        write_u64(f, count)?;
-        f.write_str(unit.unit_other_label(tables))?;
-        f.write_str(tables.in_suffix)
-    }
+    f.write_str(tables.unit_label(unit, count))?;
+    f.write_str(if past { tables.ago } else { tables.in_suffix })
 }
 
 /// `{count}{unit}{suffix}` without spaces (Chinese, Japanese).

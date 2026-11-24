@@ -1,7 +1,7 @@
-//! Human-readable formatting for Rust (`#![no_std]` by default).
+//! Human-readable formatting for Rust. Disable default features for a `no_std` build.
 //!
 //! ```rust
-//! use humany::{bytes, duration, number, percent, Humany};
+//! use humany::{bytes, duration, number, percent};
 //!
 //! assert_eq!(format!("{}", number(1_250_000)), "1.25M");
 //! assert_eq!(format!("{}", bytes(1_024)), "1 KiB");

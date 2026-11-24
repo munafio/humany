@@ -3,21 +3,19 @@
 use core::fmt;
 
 use crate::locale::Locale;
-use crate::options::FormatOptions;
 use crate::relative::Relative;
 
 /// Relative time from a wall-clock timestamp (`std` feature).
 #[cfg(feature = "std")]
 #[derive(Clone, Copy, Debug)]
 pub struct RelativeTime {
-    timestamp: std::time::SystemTime,
+    timestamp_nanos: i128,
     reference: Option<std::time::SystemTime>,
-    options: FormatOptions,
     locale: Locale,
     compact: bool,
 }
 
-/// Relative time from `timestamp` compared to now ([`Humany::DEFAULT`]).
+/// Relative time from `timestamp` compared to now ([`crate::Humany::DEFAULT`]).
 #[cfg(feature = "std")]
 pub fn relative(timestamp: std::time::SystemTime) -> RelativeTime {
     crate::Humany::DEFAULT.relative(timestamp)
@@ -25,15 +23,14 @@ pub fn relative(timestamp: std::time::SystemTime) -> RelativeTime {
 
 #[cfg(feature = "std")]
 impl RelativeTime {
-    pub(crate) fn new(
-        timestamp: std::time::SystemTime,
-        options: FormatOptions,
-        locale: Locale,
-    ) -> Self {
+    pub(crate) fn new(timestamp: std::time::SystemTime, locale: Locale) -> Self {
+        Self::from_unix_nanos(unix_nanoseconds(timestamp), locale)
+    }
+
+    pub(crate) fn from_unix_nanos(timestamp_nanos: i128, locale: Locale) -> Self {
         Self {
-            timestamp,
+            timestamp_nanos,
             reference: None,
-            options,
             locale,
             compact: false,
         }
@@ -68,8 +65,9 @@ impl RelativeTime {
 impl fmt::Display for RelativeTime {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let reference = self.reference.unwrap_or_else(std::time::SystemTime::now);
-        let delta = seconds_between(self.timestamp, reference);
-        let inner = Relative::new(delta, self.options, self.locale);
+        let delta = unix_nanoseconds(reference) - self.timestamp_nanos;
+        let seconds = (delta.abs() / 1_000_000_000).try_into().unwrap_or(u64::MAX);
+        let inner = Relative::from_parts(seconds, delta >= 0, self.locale);
         let inner = if self.compact {
             inner.compact()
         } else {
@@ -80,9 +78,9 @@ impl fmt::Display for RelativeTime {
 }
 
 #[cfg(feature = "std")]
-pub(crate) fn seconds_between(a: std::time::SystemTime, b: std::time::SystemTime) -> i64 {
-    match b.duration_since(a) {
-        Ok(d) => d.as_secs() as i64,
-        Err(e) => -(e.duration().as_secs() as i64),
+fn unix_nanoseconds(timestamp: std::time::SystemTime) -> i128 {
+    match timestamp.duration_since(std::time::UNIX_EPOCH) {
+        Ok(duration) => duration.as_nanos() as i128,
+        Err(error) => -(error.duration().as_nanos() as i128),
     }
 }

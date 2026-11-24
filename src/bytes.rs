@@ -36,7 +36,7 @@ impl Bytes {
         }
     }
 
-    /// Set fractional digits for the scaled value.
+    /// Set fractional digits for the scaled value (maximum `18`).
     pub const fn decimals(mut self, decimals: u8) -> Self {
         self.options = self.options.decimals(decimals);
         self
@@ -73,7 +73,8 @@ impl Bytes {
         self
     }
 
-    /// Replace the unit label table (must include a `B` entry at index 0).
+    /// Replace the unit label table, starting with the label for bytes.
+    /// An empty table uses the default labels for the current base.
     pub const fn units(mut self, units: &'static [&'static str]) -> Self {
         self.units = units;
         self
@@ -82,30 +83,40 @@ impl Bytes {
 
 impl fmt::Display for Bytes {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let _ = self.locale;
         let base = if self.decimal { 1000u64 } else { 1024u64 };
+        let units = if self.units.is_empty() {
+            if self.decimal {
+                DECIMAL_UNITS
+            } else {
+                BINARY_UNITS
+            }
+        } else {
+            self.units
+        };
 
         if self.value < base {
             crate::options::write_u64(f, self.value)?;
             f.write_char(self.separator)?;
-            f.write_str(self.units[0])?;
+            f.write_str(units[0])?;
             return Ok(());
         }
 
         let mut tier = 0usize;
-        let mut div: u128 = 1;
-        while tier + 1 < self.units.len() {
-            let next = div * base as u128;
-            if (self.value as u128) < next {
-                break;
-            }
+        let mut div = 1u64;
+        while tier + 1 < units.len() && self.value / div >= base {
             tier += 1;
-            div = next;
+            div *= base;
         }
 
-        let num = self.value as u128;
-        write_scaled_decimal(f, num, div, self.options)?;
+        write_scaled_decimal(
+            f,
+            self.value,
+            false,
+            div,
+            self.options,
+            self.locale.decimal_separator(),
+        )?;
         f.write_char(self.separator)?;
-        f.write_str(self.units[tier])
+        f.write_str(units[tier])
     }
 }

@@ -88,9 +88,9 @@ impl Humany {
         Bytes::new(value, self.defaults, self.locale)
     }
 
-    /// Build a [`DurationFmt`] formatter with this instance's locale and defaults.
+    /// Build a [`DurationFmt`] formatter with this instance's locale.
     pub fn duration(self, input: impl Into<DurationInput>) -> DurationFmt {
-        DurationFmt::new(input.into(), self.defaults, self.locale)
+        DurationFmt::new(input.into(), self.locale)
     }
 
     /// Build a [`Percent`] formatter with this instance's locale and defaults.
@@ -100,12 +100,12 @@ impl Humany {
 
     /// Build a [`Relative`] formatter from a signed second delta.
     pub fn relative_secs(self, delta_secs: i64) -> Relative {
-        Relative::new(delta_secs, self.defaults, self.locale)
+        Relative::new(delta_secs, self.locale)
     }
 
     /// Wall-clock relative time (requires `std` feature).
     #[cfg(feature = "std")]
     pub fn relative(self, timestamp: std::time::SystemTime) -> crate::std_rel::RelativeTime {
-        crate::std_rel::RelativeTime::new(timestamp, self.defaults, self.locale)
+        crate::std_rel::RelativeTime::new(timestamp, self.locale)
     }
 }

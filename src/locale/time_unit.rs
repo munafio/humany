@@ -8,14 +8,3 @@ pub(crate) enum TimeUnit {
     Hour,
     Day,
 }
-
-impl TimeUnit {
-    pub(crate) fn unit_other_label(self, tables: &super::tables::LocaleTables) -> &'static str {
-        match self {
-            TimeUnit::Second => tables.second_other,
-            TimeUnit::Minute => tables.minute_other,
-            TimeUnit::Hour => tables.hour_other,
-            TimeUnit::Day => tables.day_other,
-        }
-    }
-}

@@ -4,7 +4,7 @@ use core::fmt;
 
 use crate::context::Humany;
 use crate::locale::Locale;
-use crate::options::{write_fixed_f64, FormatOptions, RoundingMode};
+use crate::options::{write_scaled_f64, FormatOptions, RoundingMode};
 
 /// Human-readable percentage from a ratio (`0.5` → `50%`).
 #[derive(Clone, Copy, Debug)]
@@ -12,7 +12,7 @@ pub struct Percent {
     ratio: f64,
     options: FormatOptions,
     locale: Locale,
-    symbol: &'static str,
+    symbol: Option<&'static str>,
 }
 
 /// Format a ratio as a percentage using [`Humany::DEFAULT`].
@@ -26,11 +26,11 @@ impl Percent {
             ratio,
             options,
             locale,
-            symbol: "%",
+            symbol: None,
         }
     }
 
-    /// Set fractional digits after multiplying by 100.
+    /// Set fractional digits after multiplying by 100 (maximum `18`).
     pub const fn decimals(mut self, decimals: u8) -> Self {
         self.options = self.options.decimals(decimals);
         self
@@ -54,21 +54,22 @@ impl Percent {
         self
     }
 
-    /// Override the suffix (default locale-aware `%`).
+    /// Override the locale's percent suffix.
     pub const fn symbol(mut self, symbol: &'static str) -> Self {
-        self.symbol = symbol;
+        self.symbol = Some(symbol);
         self
     }
 }
 
 impl fmt::Display for Percent {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let pct = self.ratio * 100.0;
-        write_fixed_f64(f, pct, self.options)?;
-        f.write_str(if self.symbol == "%" {
-            self.locale.tables().percent_symbol
-        } else {
-            self.symbol
-        })
+        write_scaled_f64(
+            f,
+            self.ratio,
+            2,
+            self.options,
+            self.locale.decimal_separator(),
+        )?;
+        f.write_str(self.symbol.unwrap_or(self.locale.tables().percent_symbol))
     }
 }

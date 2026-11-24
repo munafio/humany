@@ -6,6 +6,7 @@ use super::time_unit::TimeUnit;
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct LocaleTables {
     pub(crate) percent_symbol: &'static str,
+    pub(crate) past_prefix: &'static str,
     pub(crate) ago: &'static str,
     pub(crate) in_prefix: &'static str,
     pub(crate) in_suffix: &'static str,
@@ -32,7 +33,7 @@ pub(crate) struct LocaleTables {
 }
 
 impl LocaleTables {
-    pub(crate) fn unit_label(self, unit: TimeUnit, count: u64) -> &'static str {
+    pub(crate) fn unit_label(&self, unit: TimeUnit, count: u64) -> &'static str {
         if count == 1 {
             match unit {
                 TimeUnit::Second => self.second_one,
