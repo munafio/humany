@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.1 — Unreleased
+## 0.1.1 — 2026-11-25
 
 - Preserve signed rounding and large numeric values. Clamp formatting precision to 18 decimal places and handle empty byte-unit tables.
 - Preserve pre-1970 timestamps and wide timestamp differences. Correct relative-time wording and localize decimal separators.
